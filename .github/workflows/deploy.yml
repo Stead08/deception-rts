@@ -9,6 +9,12 @@ on:
 permissions:
   contents: read
 
+env:
+  CARGO_TERM_COLOR: always
+  # Must match CI so the shared Rust cache key lines up.
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
+
 jobs:
   deploy:
     if: >-
@@ -23,14 +29,31 @@ jobs:
         with:
           toolchain: 1.95.0
           targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Restore the cache written by CI on main; deploy never writes it.
+          shared-key: bevy
+          save-if: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+      - name: Cache node_modules
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
+      - name: Cache Trunk tools
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/trunk
+          key: trunk-tools-${{ runner.os }}-v0.21.14-${{ hashFiles('Cargo.lock') }}
+          restore-keys: trunk-tools-${{ runner.os }}-v0.21.14-
       - uses: jetli/trunk-action@v0.5.1
         with:
           version: v0.21.14
-      - run: npm ci
+      - if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci
       - run: npm run build
       - run: npm run deploy
         env:
