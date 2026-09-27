@@ -1,0 +1,21 @@
+{
+  "name": "deception-rts",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "NO_COLOR=false trunk serve",
+    "build": "NO_COLOR=false trunk build --release && node scripts/optimize-wasm.mjs && node scripts/check-dist-size.mjs",
+    "check:size": "node scripts/check-dist-size.mjs",
+    "preview": "wrangler dev --local --port 8787",
+    "deploy": "wrangler deploy",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "binaryen": "132.0.0",
+    "wrangler": "4.141.0"
+  }
+}
